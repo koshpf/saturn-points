@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="theme-color" content="#0c0e12" />
+<title>Saturn Points</title>
+<link rel="manifest" href="./manifest.json" />
+<style>
+:root{--bg:#090b10;--panel:#12161d;--line:#242b36;--text:#edf2f8;--muted:#8d98a8;--gold:#e2b15c;--green:#79c99a;--blue:#8eb6ff}
+*{box-sizing:border-box}html,body{margin:0;min-height:100%;background:var(--bg);color:var(--text);font-family:Inter,ui-sans-serif,system-ui,sans-serif}
+.app{display:grid;grid-template-columns:220px 1fr;min-height:100vh}aside{border-right:1px solid var(--line);padding:22px 16px;background:#0d1117}
+.brand{color:var(--gold);letter-spacing:.16em;font-size:12px}.brand b{display:block;color:var(--text);letter-spacing:-.03em;font-size:22px;font-weight:500;margin-top:6px}
+nav{display:flex;flex-direction:column;gap:6px;margin-top:28px}nav button{text-align:left;background:transparent;color:var(--muted);border:0;border-radius:10px;padding:10px 12px;font:inherit;cursor:pointer}nav button.on{background:#1b2230;color:var(--text)}
+main{padding:28px}h1{margin:0;font-size:28px;font-weight:500}.sub{color:var(--muted);margin:8px 0 18px;max-width:720px;line-height:1.45}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px}
+.label{color:var(--muted);font-size:11px;letter-spacing:.08em;text-transform:uppercase}.value{font-size:26px;margin-top:8px;font-variant-numeric:tabular-nums}.hint{color:var(--muted);font-size:12px;margin-top:6px;line-height:1.4}
+.view{display:none}.view.on{display:block}table{width:100%;border-collapse:collapse;margin-top:12px}th,td{padding:10px 8px;border-bottom:1px solid var(--line);text-align:left;font-size:14px}th{color:var(--muted);font-size:11px;letter-spacing:.06em}.num{text-align:right}.up{color:var(--green)}.gap{color:var(--gold)}
+canvas{width:100%;height:260px;margin-top:12px;background:#0e131b;border:1px solid var(--line);border-radius:14px}form{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}input,button.act{background:#0e131b;color:var(--text);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font:inherit}button.act{background:var(--text);color:#111;cursor:pointer}a{color:var(--blue)}
+@media(max-width:860px){.app{grid-template-columns:1fr}aside{border-right:0;border-bottom:1px solid var(--line)}nav{flex-direction:row;overflow:auto}.stats{grid-template-columns:1fr 1fr}main{padding:18px}}
+</style>
+</head>
+<body>
+<div class="app">
+<aside><div class="brand">SEASON 2<b>Saturn Points</b></div><nav>
+<button class="on" data-view="home">Overview</button><button data-view="board">Leaderboard</button><button data-view="daily">Daily stats</button><button data-view="track">7-day tracker</button>
+</nav></aside>
+<main>
+<section class="view on" id="home"><h1>Points growth</h1><p class="sub">Shareable tracker. Official Saturn total, community daily history, and a 7-day average once daily snapshots are saved.</p>
+<div class="stats"><div class="card"><div class="label">Official total</div><div class="value">211.95B</div><div class="hint">app.saturn.credit · 8 Oct 2026 · 8,245 wallets</div></div><div class="card"><div class="label">Season average</div><div class="value">~3.5B</div><div class="hint">211.95B over ~60 days since 9 Aug. Not a 7-day print.</div></div><div class="card"><div class="label">Last full daily range</div><div class="value">2.6–5.1B</div><div class="hint">Community snapshots, 18 Aug–1 Sep.</div></div><div class="card"><div class="label">7-day average</div><div class="value">Not yet</div><div class="hint">Community feed skipped 1 Sep to 8 Oct.</div></div></div>
+<div class="card" style="margin-top:12px"><div class="label">Community trend · not the official total</div><canvas id="chart"></canvas></div></section>
+<section class="view" id="board"><h1>Official leaderboard</h1><p class="sub">Finalized Season 2 points from the Saturn app on 8 Oct 2026.</p><div class="card"><table id="boardTable"></table></div></section>
+<section class="view" id="daily"><h1>Daily stats</h1><p class="sub">Community series from <a href="https://susdat.pages.dev/" target="_blank">susdat.pages.dev</a>. It shows 86.2B, not Saturn’s 211.95B. Gold rows are multi-day gaps.</p><div class="card"><table id="dailyTable"></table></div></section>
+<section class="view" id="track"><h1>7-day tracker</h1><p class="sub">Save the official points-distributed number once a day. After 8 days this shows average daily growth. Saved in this browser only.</p><div class="card"><form id="form"><input type="date" id="date" required /><input id="total" placeholder="211.95B" required /><input id="wallets" placeholder="8245" /><button class="act" type="submit">Save snapshot</button></form><div class="stats" id="trackStats" style="margin-top:14px"></div><table id="trackTable"></table></div></section>
+</main></div>
+<script>
+const community=[["2026-10-08",86.2e9,3.9e9,7339],["2026-09-01",82.3e9,2.6e9,7233],["2026-08-31",79.8e9,2.8e9,7063],["2026-08-30",77e9,2.6e9,6605],["2026-08-29",74.4e9,3.3e9,6508],["2026-08-27",71.1e9,3.7e9,6300],["2026-08-26",67.3e9,3.7e9,6274],["2026-08-25",63.6e9,4.5e9,6243],["2026-08-24",59.1e9,4.3e9,6210],["2026-08-23",54.8e9,4.3e9,6187],["2026-08-22",50.5e9,4.8e9,6176],["2026-08-21",45.7e9,4.3e9,6143],["2026-08-20",41.3e9,4e9,6097],["2026-08-19",37.3e9,4.2e9,6072],["2026-08-18",33.1e9,5.1e9,6045],["2026-08-16",28e9,3.5e9,5288],["2026-08-15",24.5e9,4.7e9,5994],["2026-08-14",19.8e9,3.5e9,5961],["2026-08-13",16.2e9,4.2e9,5883],["2026-08-12",12e9,6.7e9,5859],["2026-08-11",5.3e9,4.1e9,5822],["2026-08-10",1.2e9,1.2e9,5122],["2026-08-09",0,null,0]];
+const board=[["0x2843…1586","23.98B"],["0xa0de…0d86","14.05B"],["0x9c16…4a6f","8.71B"],["0x7ac0…140e","8.52B"],["0xd0c7…5d53","6.60B"],["0xb47c…5bfd","6.27B"],["0x544b…ac66","5.63B"],["0x6d01…dea9","4.34B"],["0x1b64…621f","3.55B"],["0x46e4…1bd1","3.33B"],["0xf5dc…a5d2","2.93B"],["0x862e…2f84","2.72B"],["0x5d0e…82a7","2.62B"],["0x0197…8812","2.35B"],["0x62b7…f513","2.25B"]];
+const fmt=n=>n==null?"—":n>=1e9?(n/1e9).toFixed(2).replace(/\.00$/,"")+"B":n>=1e6?(n/1e6).toFixed(1)+"M":String(n);
+const parse=s=>{const m=String(s).trim().toUpperCase().replace(/,/g,"").match(/^([0-9]*\.?[0-9]+)\s*([BMK])?$/);return m?parseFloat(m[1])*({B:1e9,M:1e6,K:1e3}[m[2]]||1):null};
+const snaps=()=>JSON.parse(localStorage.getItem("saturn-app-snaps")||"[]");
+const save=rows=>localStorage.setItem("saturn-app-snaps",JSON.stringify(rows));
+document.getElementById("boardTable").innerHTML="<thead><tr><th>#</th><th>Address</th><th class='num'>Finalized points</th></tr></thead><tbody>"+board.map((r,i)=>`<tr><td>${i+1}</td><td>${r[0]}</td><td class='num'>${r[1]}</td></tr>`).join("")+"</tbody>";
+document.getElementById("dailyTable").innerHTML="<thead><tr><th>Date</th><th class='num'>Total</th><th class='num'>Change</th><th class='num'>Wallets</th></tr></thead><tbody>"+community.map((r,i)=>{const p=community[i+1];const days=p?(new Date(r[0])-new Date(p[0]))/86400000:1;return `<tr><td>${r[0]}</td><td class='num'>${fmt(r[1])}</td><td class='num ${days>1?"gap":"up"}'>${r[2]==null?"—":"+"+fmt(r[2])}${days>1?" · "+days+"d gap":""}</td><td class='num'>${r[3].toLocaleString()}</td></tr>`}).join("")+"</tbody>";
+function renderTrack(){const rows=snaps().sort((a,b)=>a.date.localeCompare(b.date));const last=rows.at(-1),prev=rows.at(-2);let avg="Need 8 days";if(last){const base=[...rows].reverse().find(r=>(new Date(last.date)-new Date(r.date))/86400000>=7);if(base)avg=fmt((last.total-base.total)/((new Date(last.date)-new Date(base.date))/86400000))+"/day"}document.getElementById("trackStats").innerHTML=`<div class="card"><div class="label">Snapshots</div><div class="value">${rows.length}</div></div><div class="card"><div class="label">Latest</div><div class="value">${last?fmt(last.total):"—"}</div></div><div class="card"><div class="label">Last change</div><div class="value">${last&&prev?fmt(last.total-prev.total):"—"}</div></div><div class="card"><div class="label">7-day average</div><div class="value" style="font-size:20px">${avg}</div></div>`;document.getElementById("trackTable").innerHTML="<thead><tr><th>Date</th><th class='num'>Total</th><th class='num'>Change</th><th></th></tr></thead><tbody>"+[...rows].reverse().map((r,i,arr)=>{const older=arr[i+1];return `<tr><td>${r.date}</td><td class='num'>${fmt(r.total)}</td><td class='num up'>${older?"+"+fmt(r.total-older.total):"—"}</td><td><button data-del='${r.date}'>Remove</button></td></tr>`}).join("")+"</tbody>"}
+document.getElementById("date").value="2026-10-08";
+document.getElementById("form").onsubmit=e=>{e.preventDefault();const total=parse(document.getElementById("total").value);if(total==null)return alert("Use a value like 211.95B");const date=document.getElementById("date").value;save(snaps().filter(r=>r.date!==date).concat([{date,total,wallets:document.getElementById("wallets").value}]));renderTrack()};
+document.getElementById("trackTable").onclick=e=>{if(!e.target.dataset.del)return;save(snaps().filter(r=>r.date!==e.target.dataset.del));renderTrack()};
+document.querySelectorAll("nav button").forEach(btn=>btn.onclick=()=>{document.querySelectorAll("nav button").forEach(b=>b.classList.remove("on"));document.querySelectorAll(".view").forEach(v=>v.classList.remove("on"));btn.classList.add("on");document.getElementById(btn.dataset.view).classList.add("on");if(btn.dataset.view==="home")draw()});
+function draw(){const c=document.getElementById("chart");const dpr=devicePixelRatio||1;const w=c.clientWidth||800,h=260;c.width=w*dpr;c.height=h*dpr;const g=c.getContext("2d");g.setTransform(dpr,0,0,dpr,0,0);const rows=[...community].reverse();const max=Math.max(...rows.map(r=>r[1]));g.clearRect(0,0,w,h);g.beginPath();rows.forEach((r,i)=>{const x=24+(i/(rows.length-1))*(w-40);const y=h-24-(r[1]/max)*(h-48);i?g.lineTo(x,y):g.moveTo(x,y)});g.strokeStyle="#e2b15c";g.lineWidth=2;g.stroke();g.fillStyle="#8d98a8";g.font="12px sans-serif";g.fillText("9 Aug",20,h-8);g.fillText("8 Oct · 86.2B community",w-190,18)}
+renderTrack();draw();window.onresize=draw;
+</script></body></html>
